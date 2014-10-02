@@ -692,10 +692,17 @@ class RT_Client
     content.chomp! 
     content.chomp! 
     content.chomp! # 3 carriage returns at the end
+
+    # Convert response to UTF-8 
+    if resp.headers[:content_type] =~ /charset=([^;]+)/
+      response_encoding = $1.upcase
+    else
+      response_encoding = "ISO-8859-1"
+    end
     if (RUBY_VERSION.to_f >= 1.9)
-      binary = content.encode("ISO-8859-1","UTF-8", { :invalid => :replace, :undef => :replace })
+      binary = content.encode(response_encoding,"UTF-8", { :invalid => :replace, :undef => :replace })
     else  
-      binary = Iconv.conv("ISO-8859-1","UTF-8",content) # convert encoding
+      binary = Iconv.conv(response_encoding,"UTF-8",content) # convert encoding
     end
     if dir
       fh = File.new("#{dir}/#{headers['Filename'].to_s}","wb")
