@@ -5,7 +5,7 @@
 ## around the rt/client library.
 
 require "rubygems"             # so we can load gems
-require "rt/client"            # rt-client REST library
+require "rt_client/rt_client"            # rt-client REST library
 require "xmlrpc/server"        # that's what we're doing
 require "date"                 # for parsing arbitrary date formats
 

@@ -37,7 +37,7 @@ end
 
 class RT_Client
 
-	UA = "Mozilla/5.0 ruby RT Client Interface 0.7.4"
+	UA = "Mozilla/5.0 ruby RT Client Interface 0.7.5"
 	attr_reader :status, :site, :version, :cookies, :server, :user, :cookie
 
 	# Create a new RT_Client object. Load up our stored cookie and check it.
@@ -70,7 +70,7 @@ class RT_Client
 	#  cookies=<directory>
 	def initialize(*params)
 		@boundary = "----xYzZY#{rand(1000000).to_s}xYzZY"
-		@version = "0.7.4"
+		@version = "0.7.5"
 		@status = "Not connected"
 		@server = "http://localhost/"
 		@user = "rt_user"
@@ -437,7 +437,7 @@ class RT_Client
 		replies
 	end
 	
-	# Get a list of history transactions for a ticket.  Takes a ticket ID and
+  # Get a list of history transactions for a ticket.  Takes a ticket ID and
   # an optional format parameter.  If the format is ommitted, the short
   # format is assumed.  If the short format is requested, it returns an
   # array of 2 element arrays, where each 2-element array is [ticket_id,
@@ -509,22 +509,16 @@ class RT_Client
             when "attachments"
               temp = item.match(/Attachments:\s*(.*)/m)
               if temp.class != NilClass
-                atarr = temp[1].split("\n")
-                atarr.map { |a| a.gsub!(/^\s*/,"") }
+                atarr = temp[1].scan(/(\d+):\s*(\w+)\s*\((\w+)\)/)
                 atarr.each do |a|
-                  i = a.match(/(\d+):\s*(.*)/)
                   s={}
-                  s[:id] = i[1].to_s
-                  s[:name] = i[2].to_s
-                  sz = i[2].match(/(.*?)\s*\((.*?)\)/)
-                  if sz.class == MatchData
-                    s[:name] = sz[1].to_s
-                    s[:size] = sz[2].to_s
-                  end
+                  s[:id] = a[0].to_s
+                  s[:name] = a[1].to_s
+                  s[:size] = a[2].to_s
                   attachments.push s
-                  if s[:name] == 'untitled' # this is the content in HTML, I hope
+                  if s[:name] == 'untitled' and s[:size].to_i > 0 # this is the content in HTML, I hope
                     unt_att = get_attachment(id,s[:id])
-                    if (unt_att["contenttype"] == 'text/html') # hurray
+                    if (['text/html','text/plain'].include? unt_att["contenttype"]) # hurray
                       reply["content_html"] = sterilize(unt_att["content"])
                     end
                   end
@@ -774,8 +768,7 @@ class RT_Client
         # helper to convert responses from RT REST to a hash
 	def response_to_h(resp) # :nodoc:
 		resp.gsub!(/RT\/\d+\.\d+\.\d+\s\d{3}\s.*\n\n/,"") # toss the HTTP response
-		#resp.gsub!(/\n\n/,"\n") # remove double spacing, TMail stops at a blank line
-
+		
 		# unfold folded fields
 		# A newline followed by one or more spaces is treated as a
 		# single space
